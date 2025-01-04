@@ -1,11 +1,33 @@
 import { CheckCircle2, XCircle } from 'lucide-react'
-import { type DayProgress, type ExamProgress } from '../types'
+import {
+  EXAM_CONFIGS,
+  type DayProgress,
+  type ExamPhase,
+  type ExamResult
+} from '../types'
 
 interface ResultsTableProps {
-  progress: (DayProgress | ExamProgress)[]
+  progress: DayProgress[]
+  examResults: Partial<Record<ExamPhase, ExamResult>>
 }
 
-export const ResultsTable = ({ progress }: ResultsTableProps) => {
+interface ExamResultWithTitle extends ExamResult {
+  label: string
+}
+export const ResultsTable = ({ progress, examResults }: ResultsTableProps) => {
+  const examEntries: ExamResultWithTitle[] = Object.entries(examResults).map(
+    ([k, v]) => {
+      return {
+        label: EXAM_CONFIGS[k as ExamPhase].title,
+        ...v
+      }
+    }
+  )
+
+  const allProgress: (DayProgress | ExamResultWithTitle)[] = [
+    ...examEntries,
+    ...progress
+  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   return (
     <div className='overflow-x-auto'>
       <table className='w-full'>
@@ -18,16 +40,14 @@ export const ResultsTable = ({ progress }: ResultsTableProps) => {
           </tr>
         </thead>
         <tbody>
-          {progress.map((entry, idx) => {
-            if ('result' in entry) {
+          {allProgress.map((entry, idx) => {
+            if ('pushupRange' in entry) {
               // Exam entry
               return (
                 <tr key={idx} className='border-t'>
                   <td className='p-2'>{entry.date}</td>
-                  <td className='p-2'>
-                    Day {entry.day} Exam ({entry.result.level})
-                  </td>
-                  <td className='p-2 text-right'>{entry.result.pushupRange}</td>
+                  <td className='p-2'>{entry.label}</td>
+                  <td className='p-2 text-right'>{entry.pushupRange}</td>
                   <td className='p-2 text-center'>
                     <CheckCircle2 className='w-4 h-4 text-purple-500 inline' />
                   </td>
@@ -38,7 +58,7 @@ export const ResultsTable = ({ progress }: ResultsTableProps) => {
               return (
                 <tr key={idx} className='border-t'>
                   <td className='p-2'>{entry.date}</td>
-                  <td className='p-2'>Day {entry.day}</td>
+                  <td className='p-2'>Day {entry.day + 1}</td>
                   <td className='p-2 text-right'>{entry.totalPushups}</td>
                   <td className='p-2 text-center'>
                     {entry.success ? (

@@ -1,19 +1,17 @@
 import { CheckCircle2, XCircle } from 'lucide-react'
 import {
   type DayProgress,
-  type ExamProgress,
   type ExamResult,
-  type ExamDay,
-  getCurrentExamResult,
+  type ExamPhase,
   EXAM_CONFIGS
 } from '../types'
-import { calculatePushupSets } from '../utils'
+import { examResult, pushupsForDay, requiredExam } from '../utils'
 
 interface ProgressGridProps {
   currentDay: number
   totalDays: number
-  progress: (DayProgress | ExamProgress)[]
-  examResults: Partial<Record<ExamDay, ExamResult>>
+  progress: DayProgress[]
+  examResults: Partial<Record<ExamPhase, ExamResult>>
 }
 
 export const ProgressGrid = ({
@@ -22,26 +20,17 @@ export const ProgressGrid = ({
   progress,
   examResults
 }: ProgressGridProps) => {
-  const examDayMap = Object.keys(EXAM_CONFIGS).reduce(
-    (acc, examDay) => {
-      const day = parseInt(examDay)
-      acc[day + 1] = examDay
-      return acc
-    },
-    {} as Record<number, ExamDay>
-  )
+  const renderedExams: Partial<Record<ExamPhase, any>> = {}
 
   const renderDay = (day: number) => {
-    const allDayAttempts = progress.filter(
-      (p): p is DayProgress => !('result' in p) && p.day === day
-    )
+    const allDayAttempts = progress.filter((p) => p.day === day)
     const latestAttempt = allDayAttempts[allDayAttempts.length - 1]
 
     // Calculate expected pushups
-    const { result } = getCurrentExamResult(day, examResults)
-    const plannedPushups = result
-      ? calculatePushupSets(day, result).reduce((a, b) => a + b, 0)
-      : null
+    const plannedPushups = pushupsForDay(day, examResults).reduce(
+      (a, b) => a + b,
+      0
+    )
     return (
       <div
         key={day}
@@ -55,7 +44,7 @@ export const ProgressGrid = ({
                 : 'bg-gray-50'
         }`}
       >
-        <div className='text-sm text-gray-600 mb-1'>Day {day}</div>
+        <div className='text-sm text-gray-600 mb-1'>Day {day + 1}</div>
         <div className='flex items-center justify-between'>
           <span
             className={`${plannedPushups ? 'text-gray-900' : 'text-gray-300'} font-medium`}
@@ -75,10 +64,8 @@ export const ProgressGrid = ({
     )
   }
 
-  const renderExam = (examDay: ExamDay) => {
-    const examProgress = progress.find(
-      (p): p is ExamProgress => 'result' in p && p.day === examDay
-    )
+  const renderExam = (phase: ExamPhase) => {
+    const result = examResult(phase, examResults)
 
     return (
       <div className='my-6 text-center'>
@@ -88,11 +75,10 @@ export const ProgressGrid = ({
           </div>
           <div className='relative flex justify-center'>
             <div className='bg-white px-4 py-2 text-sm font-medium text-gray-500'>
-              {EXAM_CONFIGS[examDay].title}
-              {examProgress && (
+              {EXAM_CONFIGS[phase].title}
+              {result && (
                 <span className='ml-2 text-purple-600'>
-                  ({examProgress.result.pushupRange} pushups -{' '}
-                  {examProgress.result.level})
+                  ({result.pushupRange} pushups)
                 </span>
               )}
             </div>
@@ -104,11 +90,12 @@ export const ProgressGrid = ({
 
   const renderDays = () => {
     let elements = []
-    let currentDayNum = 1
-    while (currentDayNum <= totalDays) {
-      // Add exam divider if it's an exam day
-      if (examDayMap[currentDayNum] !== undefined) {
-        elements.push(renderExam(examDayMap[currentDayNum]))
+    let currentDayNum = 0
+    while (currentDayNum < totalDays) {
+      const e = requiredExam(currentDayNum)
+      if (e && !renderedExams[e]) {
+        renderedExams[e] = true
+        elements.push(renderExam(e))
       }
 
       // Add grid of 3 days

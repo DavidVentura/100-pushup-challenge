@@ -1,12 +1,9 @@
+import { workoutPlan } from './workoutPlan'
+
 // types.ts
-export type ExamDay = 0 | 6 | 12
-export type ExamPhase = 'day0' | 'day6' | 'day12' | 'completed'
+export type ExamPhase = 'day0' | 'day6' | 'day12'
 export type PushupLevel = 'low' | 'mid' | 'high'
-export const PushupRatios: Record<PushupLevel, number> = {
-  low: 1,
-  mid: 1.6,
-  high: 2
-}
+
 export interface ExamResult {
   pushupRange: string
   level: PushupLevel
@@ -29,12 +26,12 @@ export interface DayProgress {
   success: boolean
   totalPushups: number
 }
-
+/*
 export interface ExamProgress {
-  day: ExamDay
+  day: ExamPhase
   date: string
   result: ExamResult
-}
+}*/
 
 export interface SetStatus {
   timerActive: boolean
@@ -44,17 +41,17 @@ export interface SetStatus {
 
 export interface AppState {
   currentDay: number
-  examPhase: ExamPhase
-  examResults: Partial<Record<ExamDay, ExamResult>>
-  progress: (DayProgress | ExamProgress)[]
+  examResults: Partial<Record<ExamPhase, ExamResult>>
+  progress: DayProgress[]
+  // examProgress ??
 }
 
 export const STORAGE_KEY = 'pushupChallenge'
 export const TOTAL_DAYS = 18
 
 // constants.ts
-export const EXAM_CONFIGS: Record<ExamDay, ExamConfig> = {
-  0: {
+export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
+  day0: {
     title: 'Initial Pushup Test',
     question: 'How many pushups can you do in one set?',
     options: [
@@ -72,7 +69,7 @@ export const EXAM_CONFIGS: Record<ExamDay, ExamConfig> = {
       }
     ]
   },
-  6: {
+  day6: {
     title: 'Week 2 test',
     question: 'How many pushups can you do in one set now?',
     options: [
@@ -90,7 +87,7 @@ export const EXAM_CONFIGS: Record<ExamDay, ExamConfig> = {
       }
     ]
   },
-  12: {
+  day12: {
     title: 'Week 4 test',
     question: "Let's measure your progress. How many pushups can you do?",
     options: [
@@ -108,21 +105,4 @@ export const EXAM_CONFIGS: Record<ExamDay, ExamConfig> = {
       }
     ]
   }
-}
-
-export const getCurrentExamResult = (
-  currentDay: number,
-  examResults: Partial<Record<ExamDay, ExamResult>>
-): { examDay: ExamDay; result: ExamResult | undefined } => {
-  if (currentDay <= 6) {
-    return { examDay: 0, result: examResults[0] }
-  } else if (currentDay <= 12) {
-    return { examDay: 6, result: examResults[6] }
-  } else {
-    return { examDay: 12, result: examResults[12] }
-  }
-}
-
-export const isExamDay = (day: number): day is ExamDay => {
-  return day === 0 || day === 6 || day === 12
 }

@@ -3,24 +3,26 @@ import {
   type AppState,
   type ExamResult,
   type DayProgress,
-  type ExamProgress,
-  type SetStatus,
-  type ExamDay,
   STORAGE_KEY,
   TOTAL_DAYS,
-  isExamDay,
-  getCurrentExamResult
+  type ExamPhase
 } from '../types'
 import { ExamForm } from '../components/ExamForm'
 import { ProgressGrid } from '../components/ProgressGrid'
 import { WorkoutTracker } from '../components/WorkoutTracker'
 import { ResultsTable } from '../components/ResultsTable'
-import { calculatePushupSets, getNextExamPhase, formatDate } from '../utils'
+import {
+  calculatePushupSets,
+  requiredExam,
+  completedExam,
+  formatDate,
+  examResult,
+  getWorkout
+} from '../utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const INITIAL_STATE: AppState = {
   currentDay: 0,
-  examPhase: 'day0',
   examResults: {},
   progress: []
 }
@@ -31,7 +33,6 @@ export default function App() {
     return savedState ? JSON.parse(savedState) : INITIAL_STATE
   }
   const [state, setState] = useState<AppState>(getState())
-  // THEN DAY6 is overwritten by exam
 
   const [activeTab, setActiveTab] = useState('workout')
 
@@ -41,35 +42,20 @@ export default function App() {
   }, [state])
 
   // Handle exam completion
-  const handleExamSubmit = (result: ExamResult) => {
-    const examDay = state.currentDay as ExamDay
-
+  const handleExamSubmit = (phase: ExamPhase, result: ExamResult) => {
     setState((prev) => ({
       ...prev,
       examResults: {
         ...prev.examResults,
-        [examDay]: result
-      },
-      examPhase: getNextExamPhase(prev.examPhase),
-      currentDay: prev.currentDay + 1,
-      progress: [
-        ...prev.progress,
-        {
-          day: examDay,
-          date: formatDate(new Date()),
-          result
-        } as ExamProgress
-      ]
+        [phase]: result
+      }
     }))
   }
 
   // Calculate current pushup sets
-  const { result } = getCurrentExamResult(state.currentDay, state.examResults)
-  const currentSets = result
-    ? calculatePushupSets(state.currentDay, result)
-    : []
-  // Determine if current day is an exam day
-  const isExamToday = isExamDay(state.currentDay)
+  const exam = requiredExam(state.currentDay)
+  const result = examResult(exam, state.examResults)!
+  const workout = getWorkout(state.currentDay)
 
   const storeWorkout = (success: boolean, pushupsDone: number) => {
     setState((prev) => ({
@@ -103,7 +89,7 @@ export default function App() {
   }
 
   return (
-    <div className='container mx-auto p-4 space-y-6'>
+    <div className='container mx-auto p-4 space-y-6 w-full max-w-3xl '>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value='workout'>Workout</TabsTrigger>
@@ -112,8 +98,11 @@ export default function App() {
         </TabsList>
 
         <TabsContent value='workout'>
-          {isExamToday ? (
-            <ExamForm examPhase={state.examPhase} onSubmit={handleExamSubmit} />
+          {!completedExam(exam, state.examResults) ? (
+            <ExamForm
+              examPhase={exam}
+              onSubmit={(res) => handleExamSubmit(exam, res)}
+            />
           ) : (
             <>
               <h2>
@@ -121,7 +110,8 @@ export default function App() {
               </h2>
 
               <WorkoutTracker
-                pushupSets={currentSets}
+                workout={workout}
+                result={result}
                 onFinishDay={handleDayComplete}
                 onFailSet={handleFailSet}
               />
@@ -139,7 +129,10 @@ export default function App() {
         </TabsContent>
 
         <TabsContent value='history'>
-          <ResultsTable progress={state.progress} />
+          <ResultsTable
+            progress={state.progress}
+            examResults={state.examResults}
+          />
         </TabsContent>
       </Tabs>
     </div>

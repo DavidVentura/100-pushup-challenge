@@ -1,19 +1,20 @@
 // components/WorkoutTracker.tsx
 import { Button } from '@/components/ui/button'
 import { Timer } from 'lucide-react'
-import { type SetStatus } from '../types'
+import { type ExamResult, type SetStatus } from '../types'
 import { useState, useEffect } from 'react'
+import type { DayWorkout } from '@/workoutPlan'
 
 interface WorkoutTrackerProps {
-  pushupSets: number[]
+  workout: DayWorkout
+  result: ExamResult
   onFailSet: (setIndex: number) => void
   onFinishDay: () => void
 }
 
-const REST_TIME = 60
-
 export const WorkoutTracker = ({
-  pushupSets,
+  workout,
+  result,
 
   onFinishDay,
   onFailSet
@@ -24,10 +25,11 @@ export const WorkoutTracker = ({
   })
   const [timeLeft, setTimeLeft] = useState(0)
   const [activeSet, setActiveSet] = useState(0)
-  const isLastSet = activeSet === pushupSets.length - 1
+  const sets = workout.sets[result.level]
+  const isLastSet = activeSet === sets.length - 1
 
   const handleAnotherMinute = () => {
-    setTimeLeft(REST_TIME)
+    setTimeLeft(60_000)
   }
 
   const handleStartSet = () => {
@@ -67,7 +69,7 @@ export const WorkoutTracker = ({
 
       onFinishDay()
     } else {
-      setTimeLeft(REST_TIME)
+      setTimeLeft(workout.restTime)
       setSetStatus({
         timerActive: true,
         isResting: true
@@ -103,7 +105,7 @@ export const WorkoutTracker = ({
   return (
     <div className='space-y-6'>
       <div className='grid grid-cols-5 gap-4'>
-        {pushupSets.map((reps, idx) => {
+        {sets.map((reps, idx) => {
           const isActive = activeSet === idx
           return (
             <div

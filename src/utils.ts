@@ -1,38 +1,54 @@
 // utils.ts
 import { type ExamResult, type ExamPhase } from './types'
-import { workoutPlan } from './workoutPlan'
+import { workoutPlan, type DayWorkout } from './workoutPlan'
 
 export const calculatePushupSets = (
   currentDay: number,
   result: ExamResult
 ): number[] => {
-  const week = Math.floor(currentDay / 3)
-  if (week == 6) {
-    return [9999] // FIXME this hsouldn't be called
-  }
+  return getWorkout(currentDay).sets[result!.level]
+}
 
+export const getWorkout = (day: number): DayWorkout => {
+  const week = Math.floor(day / 3)
   const weekPlan = workoutPlan[week]
-  const dayPlan = weekPlan[currentDay % 3]
-  return dayPlan.sets[result!.level]
+  const dayPlan = weekPlan.days[day % 3]
+  return dayPlan
 }
-
-export const getNextExamPhase = (currentPhase: ExamPhase): ExamPhase => {
-  switch (currentPhase) {
-    case 'day0':
-      return 'day6'
-    case 'day6':
-      return 'day12'
-    case 'day12':
-      return 'completed'
-    default:
-      return 'completed'
-  }
-}
-
 export const formatDate = (date: Date): string => {
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
   })
+}
+
+export const requiredExam = (day: number): ExamPhase => {
+  const week = Math.floor(day / 3)
+  const weekPlan = workoutPlan[week]
+  return weekPlan.requiredExam
+}
+
+export const completedExam = (
+  p: ExamPhase,
+  results: Partial<Record<ExamPhase, ExamResult>>
+): boolean => {
+  return results[p] !== undefined
+}
+
+export const examResult = (
+  p: ExamPhase,
+  results: Partial<Record<ExamPhase, ExamResult>>
+): ExamResult | null => {
+  return results[p] || null
+}
+
+export const pushupsForDay = (
+  day: number,
+  results: Partial<Record<ExamPhase, ExamResult>>
+): number[] => {
+  const exam = requiredExam(day)
+  const result = exam ? examResult(exam, results) : null
+  const plannedPushups = result ? calculatePushupSets(day, result) : []
+  return plannedPushups
 }

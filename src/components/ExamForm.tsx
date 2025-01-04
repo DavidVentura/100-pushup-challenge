@@ -18,11 +18,7 @@ interface ExamFormProps {
 
 export const ExamForm = ({ examPhase, onSubmit }: ExamFormProps) => {
   const [selectedOption, setSelectedOption] = React.useState<string>('')
-
-  if (examPhase === 'completed') return null
-
-  const examDay = examPhase === 'day0' ? 0 : examPhase === 'day6' ? 6 : 12
-  const config = EXAM_CONFIGS[examDay]
+  const config = EXAM_CONFIGS[examPhase]
 
   const handleSubmit = () => {
     const level: PushupLevel = selectedOption as PushupLevel //TODO
