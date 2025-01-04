@@ -5,29 +5,28 @@ import {
   type ExamPhase,
   type ExamResult
 } from '../types'
+import { formatDate } from '@/utils'
 
 interface ResultsTableProps {
   progress: DayProgress[]
-  examResults: Partial<Record<ExamPhase, ExamResult>>
+  examResults: ExamResult[]
 }
 
 interface ExamResultWithTitle extends ExamResult {
   label: string
 }
 export const ResultsTable = ({ progress, examResults }: ResultsTableProps) => {
-  const examEntries: ExamResultWithTitle[] = Object.entries(examResults).map(
-    ([k, v]) => {
-      return {
-        label: EXAM_CONFIGS[k as ExamPhase].title,
-        ...v
-      }
+  const examEntries: ExamResultWithTitle[] = examResults.map((e) => {
+    return {
+      label: EXAM_CONFIGS[e.phase].title,
+      ...e
     }
-  )
+  })
 
   const allProgress: (DayProgress | ExamResultWithTitle)[] = [
     ...examEntries,
     ...progress
-  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  ].sort((a, b) => a.dateEpochMs - b.dateEpochMs)
   return (
     <div className='overflow-x-auto'>
       <table className='w-full'>
@@ -44,20 +43,28 @@ export const ResultsTable = ({ progress, examResults }: ResultsTableProps) => {
             if ('pushupRange' in entry) {
               // Exam entry
               return (
-                <tr key={idx} className='border-t'>
-                  <td className='p-2'>{entry.date}</td>
+                <tr key={idx} className={`border-t`}>
+                  <td className='p-2'>
+                    {formatDate(new Date(entry.dateEpochMs))}
+                  </td>
                   <td className='p-2'>{entry.label}</td>
                   <td className='p-2 text-right'>{entry.pushupRange}</td>
                   <td className='p-2 text-center'>
-                    <CheckCircle2 className='w-4 h-4 text-purple-500 inline' />
+                    {entry.level == 'fail' ? (
+                      <XCircle className='w-4 h-4 text-red-500 inline' />
+                    ) : (
+                      <CheckCircle2 className='w-4 h-4 text-purple-500 inline' />
+                    )}
                   </td>
                 </tr>
               )
             } else {
               // Regular day entry
               return (
-                <tr key={idx} className='border-t'>
-                  <td className='p-2'>{entry.date}</td>
+                <tr key={idx} className={`border-t`}>
+                  <td className='p-2'>
+                    {formatDate(new Date(entry.dateEpochMs))}
+                  </td>
                   <td className='p-2'>Day {entry.day + 1}</td>
                   <td className='p-2 text-right'>{entry.totalPushups}</td>
                   <td className='p-2 text-center'>

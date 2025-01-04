@@ -5,18 +5,13 @@ import {
   type ExamPhase,
   EXAM_CONFIGS
 } from '../types'
-import {
-  completedExam,
-  examResult,
-  pushupsForDay,
-  requiredExam
-} from '../utils'
+import { passedExam, examResult, pushupsForDay, requiredExam } from '../utils'
 
 interface ProgressGridProps {
   currentDay: number
   totalDays: number
   progress: DayProgress[]
-  examResults: Partial<Record<ExamPhase, ExamResult>>
+  examResults: ExamResult[]
 }
 
 export const ProgressGrid = ({
@@ -28,7 +23,9 @@ export const ProgressGrid = ({
   const renderedExams: Partial<Record<ExamPhase, any>> = {}
 
   const renderDay = (day: number, isExamActive: boolean) => {
-    const allDayAttempts = progress.filter((p) => p.day === day)
+    const allDayAttempts = progress.filter(
+      (p) => !p.overridden && p.day === day
+    )
     const latestAttempt = allDayAttempts[allDayAttempts.length - 1]
     const plannedPushups = pushupsForDay(day, examResults).reduce(
       (a, b) => a + b,
@@ -99,9 +96,8 @@ export const ProgressGrid = ({
         const firstDayPhase = requiredExam(currentDay)
         let isActive = false
         if (e == firstDayPhase) {
-          isActive = !foundActive && !completedExam(firstDayPhase, examResults)
-          foundActive =
-            foundActive || !completedExam(firstDayPhase, examResults)
+          isActive = !foundActive && !passedExam(firstDayPhase, examResults)
+          foundActive = foundActive || !passedExam(firstDayPhase, examResults)
         }
 
         elements.push(renderExam(e, isActive))
@@ -110,19 +106,17 @@ export const ProgressGrid = ({
       // Add grid of 3 days
       elements.push(
         <>
-        <div>
-          Week {currentDayNum / 3 + 1}
-        </div>
-        <div key={`grid-${currentDayNum}`} className='grid grid-cols-3 gap-4'>
-          {[0, 1, 2].map((offset) => {
-            const dayNum = currentDayNum + offset
-            return dayNum <= totalDays ? (
-              renderDay(dayNum, foundActive)
-            ) : (
-              <div key={`empty-${dayNum}`} />
-            )
-          })}
-        </div>
+          <div>Week {currentDayNum / 3 + 1}</div>
+          <div key={`grid-${currentDayNum}`} className='grid grid-cols-3 gap-4'>
+            {[0, 1, 2].map((offset) => {
+              const dayNum = currentDayNum + offset
+              return dayNum <= totalDays ? (
+                renderDay(dayNum, foundActive)
+              ) : (
+                <div key={`empty-${dayNum}`} />
+              )
+            })}
+          </div>
         </>
       )
 

@@ -29,24 +29,20 @@ export const requiredExam = (day: number): ExamPhase => {
   return weekPlan.requiredExam
 }
 
-export const completedExam = (
-  p: ExamPhase,
-  results: Partial<Record<ExamPhase, ExamResult>>
-): boolean => {
-  return results[p] !== undefined
+export const passedExam = (p: ExamPhase, results: ExamResult[]): boolean => {
+  return (
+    results.findLast((ph) => ph.phase === p && ph.level != 'fail') !== undefined
+  )
 }
 
 export const examResult = (
   p: ExamPhase,
-  results: Partial<Record<ExamPhase, ExamResult>>
+  results: ExamResult[]
 ): ExamResult | null => {
-  return results[p] || null
+  return results.findLast((ph) => ph.phase === p && ph.level !== 'fail') || null
 }
 
-export const pushupsForDay = (
-  day: number,
-  results: Partial<Record<ExamPhase, ExamResult>>
-): number[] => {
+export const pushupsForDay = (day: number, results: ExamResult[]): number[] => {
   const exam = requiredExam(day)
   const result = exam ? examResult(exam, results) : null
   const plannedPushups = result ? calculatePushupSets(day, result) : []

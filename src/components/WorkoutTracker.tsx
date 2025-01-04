@@ -25,7 +25,7 @@ export const WorkoutTracker = ({
   })
   const [timeLeft, setTimeLeft] = useState(0)
   const [activeSet, setActiveSet] = useState(0)
-  const sets = workout.sets[result.level]
+  const sets = workout.sets[result.level] || [] // For FAILED state
   const isLastSet = activeSet === sets.length - 1
 
   const handleAnotherMinute = () => {

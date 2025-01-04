@@ -4,25 +4,19 @@ import {
   type ExamResult,
   type DayProgress,
   STORAGE_KEY,
-  TOTAL_DAYS,
-  type ExamPhase
+  TOTAL_DAYS
 } from '../types'
 import { ExamForm } from '../components/ExamForm'
 import { ProgressGrid } from '../components/ProgressGrid'
 import { WorkoutTracker } from '../components/WorkoutTracker'
 import { ResultsTable } from '../components/ResultsTable'
-import {
-  requiredExam,
-  completedExam,
-  formatDate,
-  examResult,
-  getWorkout
-} from '../utils'
+import { requiredExam, passedExam, examResult, getWorkout } from '../utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const INITIAL_STATE: AppState = {
+  dataVersion: 2,
   currentDay: 0,
-  examResults: {},
+  examResults: [],
   progress: []
 }
 
@@ -31,13 +25,17 @@ export default function App() {
     const savedState = localStorage.getItem(STORAGE_KEY)
     try {
       const parsed = savedState ? JSON.parse(savedState) : INITIAL_STATE
+      if (parsed.dataVersion != INITIAL_STATE.dataVersion) {
+        // TODO migrations?
+        return INITIAL_STATE
+      }
       return parsed
     } catch {
       return INITIAL_STATE
     }
   }
-  const [state, setState] = useState<AppState>(getState())
 
+  const [state, setState] = useState<AppState>(getState())
   const [activeTab, setActiveTab] = useState('workout')
 
   // Save state changes
@@ -46,13 +44,23 @@ export default function App() {
   }, [state])
 
   // Handle exam completion
-  const handleExamSubmit = (phase: ExamPhase, result: ExamResult) => {
+  const handleExamSubmit = (result: ExamResult) => {
+    if (result.level == 'fail') {
+      setState((prev) => {
+        const goBackTo = prev.currentDay - 3 // TODO: -1 week nicer?
+        const progress = prev.progress.map((p) =>
+          p.day >= goBackTo ? { ...p, overridden: true } : p
+        )
+        return {
+          ...prev,
+          progress,
+          currentDay: goBackTo
+        }
+      })
+    }
     setState((prev) => ({
       ...prev,
-      examResults: {
-        ...prev.examResults,
-        [phase]: result
-      }
+      examResults: [...prev.examResults, result]
     }))
   }
 
@@ -69,7 +77,7 @@ export default function App() {
         ...prev.progress,
         {
           day: prev.currentDay,
-          date: formatDate(new Date()),
+          dateEpochMs: new Date().getTime(),
           success,
           totalPushups: pushupsDone
         } as DayProgress
@@ -95,12 +103,9 @@ export default function App() {
 
   return (
     <div className='container mx-auto p-4 space-y-6 w-full max-w-3xl '>
-      {state.currentDay == 0 && !completedExam(exam, state.examResults) ? (
+      {state.currentDay == 0 && !passedExam(exam, state.examResults) ? (
         //  First exam takes over whole app
-        <ExamForm
-          examPhase={exam}
-          onSubmit={(res) => handleExamSubmit(exam, res)}
-        />
+        <ExamForm examPhase={exam} onSubmit={handleExamSubmit} />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className='flex justify-center'>
@@ -112,11 +117,8 @@ export default function App() {
           </div>
 
           <TabsContent value='workout'>
-            {!completedExam(exam, state.examResults) ? (
-              <ExamForm
-                examPhase={exam}
-                onSubmit={(res) => handleExamSubmit(exam, res)}
-              />
+            {!passedExam(exam, state.examResults) ? (
+              <ExamForm examPhase={exam} onSubmit={handleExamSubmit} />
             ) : (
               <>
                 <h2>

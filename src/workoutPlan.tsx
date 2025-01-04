@@ -1,7 +1,7 @@
 import { type PushupLevel, type ExamPhase } from './types'
 export interface DayWorkout {
   restTime: number
-  sets: Record<PushupLevel, number[]>
+  sets: Partial<Record<PushupLevel, number[]>>
 }
 export interface WeekWorkout {
   requiredExam: ExamPhase
@@ -38,7 +38,7 @@ const WEEK_1: WeekWorkout = {
   ]
 }
 
-const WEEK_2 = {
+const WEEK_2: WeekWorkout = {
   requiredExam: 'day0',
   days: [
     {
@@ -98,7 +98,7 @@ const WEEK_3: WeekWorkout = {
   ]
 }
 
-const WEEK_4 = {
+const WEEK_4: WeekWorkout = {
   requiredExam: 'day6',
   days: [
     {

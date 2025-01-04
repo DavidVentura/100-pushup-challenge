@@ -1,13 +1,11 @@
-import { workoutPlan } from './workoutPlan'
-
-// types.ts
 export type ExamPhase = 'day0' | 'day6' | 'day12' | 'day15'
-export type PushupLevel = 'low' | 'mid' | 'high'
+export type PushupLevel = 'low' | 'mid' | 'high' | 'fail'
 
 export interface ExamResult {
   pushupRange: string
   level: PushupLevel
-  date: string
+  dateEpochMs: number
+  phase: ExamPhase
 }
 
 export interface ExamOption {
@@ -25,13 +23,8 @@ export interface DayProgress {
   date: string
   success: boolean
   totalPushups: number
+  overridden: boolean
 }
-/*
-export interface ExamProgress {
-  day: ExamPhase
-  date: string
-  result: ExamResult
-}*/
 
 export interface SetStatus {
   timerActive: boolean
@@ -40,16 +33,15 @@ export interface SetStatus {
 }
 
 export interface AppState {
+  dataVersion: number
   currentDay: number
-  examResults: Partial<Record<ExamPhase, ExamResult>>
+  examResults: ExamResult[]
   progress: DayProgress[]
-  // examProgress ??
 }
 
 export const STORAGE_KEY = 'pushupChallenge'
 export const TOTAL_DAYS = 18
 
-// constants.ts
 export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
   day0: {
     title: 'Initial Pushup Test',
@@ -74,6 +66,10 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
     question: 'How many pushups can you do in one set now?',
     options: [
       {
+        label: '<16',
+        level: 'fail'
+      },
+      {
         label: '16-20',
         level: 'low'
       },
@@ -91,6 +87,10 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
     title: 'Week 4 test',
     question: "Let's measure your progress. How many pushups can you do?",
     options: [
+      {
+        label: '<31',
+        level: 'fail'
+      },
       {
         label: '31-35',
         level: 'low'
@@ -110,6 +110,10 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
     question: "Let's measure your progress. How many pushups can you do?",
     options: [
       {
+        label: '<46',
+        level: 'fail'
+      },
+      {
         label: '46-50',
         level: 'low'
       },
@@ -122,6 +126,5 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
         level: 'high'
       }
     ]
-
   }
 }

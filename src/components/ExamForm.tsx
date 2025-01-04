@@ -7,7 +7,6 @@ import {
   type ExamResult,
   EXAM_CONFIGS
 } from '../types'
-import { formatDate } from '../utils'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 
@@ -17,22 +16,23 @@ interface ExamFormProps {
 }
 
 export const ExamForm = ({ examPhase, onSubmit }: ExamFormProps) => {
-  const [selectedOption, setSelectedOption] = React.useState<string>('')
+  const [selectedOption, setSelectedOption] =
+    React.useState<PushupLevel | null>(null)
   const config = EXAM_CONFIGS[examPhase]
 
   const handleSubmit = () => {
-    const level: PushupLevel = selectedOption as PushupLevel //TODO
+    const level: PushupLevel = selectedOption!
     const pushupRange = config.options.find(
       (opt) => opt.level === level
     )?.label!
     const result: ExamResult = {
       pushupRange,
       level,
-      date: formatDate(new Date())
+      dateEpochMs: new Date().getTime(),
+      phase: examPhase
     }
 
     onSubmit(result)
-    setSelectedOption('')
   }
   return (
     <Card className='w-full max-w-xl mx-auto'>
@@ -44,8 +44,8 @@ export const ExamForm = ({ examPhase, onSubmit }: ExamFormProps) => {
           <p>{config.question}</p>
 
           <RadioGroup
-            value={selectedOption}
-            onValueChange={setSelectedOption}
+            value={selectedOption || ''}
+            onValueChange={(v) => setSelectedOption(v! as PushupLevel)}
             className='space-y-4'
           >
             {config.options.map((option, index) => (
@@ -62,7 +62,13 @@ export const ExamForm = ({ examPhase, onSubmit }: ExamFormProps) => {
             ))}
           </RadioGroup>
 
-          <Button onClick={handleSubmit} disabled={!selectedOption}>
+          <Button
+            onClick={handleSubmit}
+            disabled={!selectedOption}
+            className={
+              selectedOption === 'fail' ? 'bg-red-500' : 'bg-green-500'
+            }
+          >
             Submit
           </Button>
         </div>
