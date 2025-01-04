@@ -1,7 +1,7 @@
 import { workoutPlan } from './workoutPlan'
 
 // types.ts
-export type ExamPhase = 'day0' | 'day6' | 'day12'
+export type ExamPhase = 'day0' | 'day6' | 'day12' | 'day15'
 export type PushupLevel = 'low' | 'mid' | 'high'
 
 export interface ExamResult {
@@ -104,5 +104,24 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
         level: 'high'
       }
     ]
+  },
+  day15: {
+    title: 'Week 5 test',
+    question: "Let's measure your progress. How many pushups can you do?",
+    options: [
+      {
+        label: '46-50',
+        level: 'low'
+      },
+      {
+        label: '51-60',
+        level: 'mid'
+      },
+      {
+        label: '61+',
+        level: 'high'
+      }
+    ]
+
   }
 }

@@ -158,8 +158,8 @@ const WEEK_5: WeekWorkout = {
   ]
 }
 
-const WEEK_6 = {
-  requiredExam: 'day12',
+const WEEK_6: WeekWorkout = {
+  requiredExam: 'day15',
   days: [
     {
       restTime: 60,
