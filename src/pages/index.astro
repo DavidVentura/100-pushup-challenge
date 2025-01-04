@@ -1,5 +1,6 @@
 ---
-
+import ExerciseApp from './app.jsx';
+import '@/styles/globals.css'
 ---
 
 <html lang="en">
@@ -11,6 +12,6 @@
 		<title>Astro</title>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<ExerciseApp client:only="react" />
 	</body>
 </html>
