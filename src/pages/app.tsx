@@ -29,7 +29,12 @@ const INITIAL_STATE: AppState = {
 export default function App() {
   const getState = () => {
     const savedState = localStorage.getItem(STORAGE_KEY)
-    return savedState ? JSON.parse(savedState) : INITIAL_STATE
+    try {
+      const parsed = savedState ? JSON.parse(savedState) : INITIAL_STATE
+      return parsed
+    } catch {
+      return INITIAL_STATE
+    }
   }
   const [state, setState] = useState<AppState>(getState())
 
@@ -90,51 +95,61 @@ export default function App() {
 
   return (
     <div className='container mx-auto p-4 space-y-6 w-full max-w-3xl '>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value='workout'>Workout</TabsTrigger>
-          <TabsTrigger value='progress'>Progress</TabsTrigger>
-          <TabsTrigger value='history'>History</TabsTrigger>
-        </TabsList>
+      {state.currentDay == 0 && !completedExam(exam, state.examResults) ? (
+        //  First exam takes over whole app
+        <ExamForm
+          examPhase={exam}
+          onSubmit={(res) => handleExamSubmit(exam, res)}
+        />
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className='flex justify-center'>
+            <TabsList>
+              <TabsTrigger value='workout'>Workout</TabsTrigger>
+              <TabsTrigger value='progress'>Progress</TabsTrigger>
+              <TabsTrigger value='history'>History</TabsTrigger>
+            </TabsList>
+          </div>
 
-        <TabsContent value='workout'>
-          {!completedExam(exam, state.examResults) ? (
-            <ExamForm
-              examPhase={exam}
-              onSubmit={(res) => handleExamSubmit(exam, res)}
-            />
-          ) : (
-            <>
-              <h2>
-                Day {state.currentDay} / {TOTAL_DAYS}
-              </h2>
-
-              <WorkoutTracker
-                workout={workout}
-                result={result}
-                onFinishDay={handleDayComplete}
-                onFailSet={handleFailSet}
+          <TabsContent value='workout'>
+            {!completedExam(exam, state.examResults) ? (
+              <ExamForm
+                examPhase={exam}
+                onSubmit={(res) => handleExamSubmit(exam, res)}
               />
-            </>
-          )}
-        </TabsContent>
+            ) : (
+              <>
+                <h2>
+                  Day {state.currentDay} / {TOTAL_DAYS}
+                </h2>
 
-        <TabsContent value='progress'>
-          <ProgressGrid
-            currentDay={state.currentDay}
-            totalDays={TOTAL_DAYS}
-            progress={state.progress}
-            examResults={state.examResults}
-          />
-        </TabsContent>
+                <WorkoutTracker
+                  workout={workout}
+                  result={result}
+                  onFinishDay={handleDayComplete}
+                  onFailSet={handleFailSet}
+                />
+              </>
+            )}
+          </TabsContent>
 
-        <TabsContent value='history'>
-          <ResultsTable
-            progress={state.progress}
-            examResults={state.examResults}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value='progress'>
+            <ProgressGrid
+              currentDay={state.currentDay}
+              totalDays={TOTAL_DAYS}
+              progress={state.progress}
+              examResults={state.examResults}
+            />
+          </TabsContent>
+
+          <TabsContent value='history'>
+            <ResultsTable
+              progress={state.progress}
+              examResults={state.examResults}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   )
 }

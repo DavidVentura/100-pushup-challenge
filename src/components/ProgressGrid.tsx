@@ -5,7 +5,12 @@ import {
   type ExamPhase,
   EXAM_CONFIGS
 } from '../types'
-import { examResult, pushupsForDay, requiredExam } from '../utils'
+import {
+  completedExam,
+  examResult,
+  pushupsForDay,
+  requiredExam
+} from '../utils'
 
 interface ProgressGridProps {
   currentDay: number
@@ -22,11 +27,9 @@ export const ProgressGrid = ({
 }: ProgressGridProps) => {
   const renderedExams: Partial<Record<ExamPhase, any>> = {}
 
-  const renderDay = (day: number) => {
+  const renderDay = (day: number, isExamActive: boolean) => {
     const allDayAttempts = progress.filter((p) => p.day === day)
     const latestAttempt = allDayAttempts[allDayAttempts.length - 1]
-
-    // Calculate expected pushups
     const plannedPushups = pushupsForDay(day, examResults).reduce(
       (a, b) => a + b,
       0
@@ -35,7 +38,7 @@ export const ProgressGrid = ({
       <div
         key={day}
         className={`p-4 rounded ${
-          day === currentDay
+          day === currentDay && !isExamActive
             ? 'border-2 border-blue-500'
             : latestAttempt?.success
               ? 'bg-green-100'
@@ -64,24 +67,20 @@ export const ProgressGrid = ({
     )
   }
 
-  const renderExam = (phase: ExamPhase) => {
+  const renderExam = (phase: ExamPhase, isActive: boolean) => {
     const result = examResult(phase, examResults)
-
     return (
-      <div className='my-6 text-center'>
-        <div className='relative'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-gray-300'></div>
-          </div>
-          <div className='relative flex justify-center'>
-            <div className='bg-white px-4 py-2 text-sm font-medium text-gray-500'>
-              {EXAM_CONFIGS[phase].title}
-              {result && (
-                <span className='ml-2 text-purple-600'>
-                  ({result.pushupRange} pushups)
-                </span>
-              )}
-            </div>
+      <div
+        className={`p-4 rounded border ${isActive ? ' border-2 border-blue-500' : result ? 'bg-purple-50 border-purple-400' : 'border-gray-500'}`}
+      >
+        <div className='flex justify-center'>
+          <div className='px-4 py-2 text-sm font-medium text-gray-500'>
+            {EXAM_CONFIGS[phase].title}
+            {result && (
+              <span className='px-4 py-2 text-xs font-medium text-gray-500'>
+                {result.pushupRange} pushups
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -91,25 +90,40 @@ export const ProgressGrid = ({
   const renderDays = () => {
     let elements = []
     let currentDayNum = 0
+    let foundActive = false
     while (currentDayNum < totalDays) {
       const e = requiredExam(currentDayNum)
       if (e && !renderedExams[e]) {
         renderedExams[e] = true
-        elements.push(renderExam(e))
+        // Only first one is active
+        const firstDayPhase = requiredExam(currentDay)
+        let isActive = false
+        if (e == firstDayPhase) {
+          isActive = !foundActive && !completedExam(firstDayPhase, examResults)
+          foundActive =
+            foundActive || !completedExam(firstDayPhase, examResults)
+        }
+
+        elements.push(renderExam(e, isActive))
       }
 
       // Add grid of 3 days
       elements.push(
+        <>
+        <div>
+          Week {currentDayNum / 3 + 1}
+        </div>
         <div key={`grid-${currentDayNum}`} className='grid grid-cols-3 gap-4'>
           {[0, 1, 2].map((offset) => {
             const dayNum = currentDayNum + offset
             return dayNum <= totalDays ? (
-              renderDay(dayNum)
+              renderDay(dayNum, foundActive)
             ) : (
               <div key={`empty-${dayNum}`} />
             )
           })}
         </div>
+        </>
       )
 
       currentDayNum += 3

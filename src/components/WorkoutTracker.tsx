@@ -69,7 +69,7 @@ export const WorkoutTracker = ({
 
       onFinishDay()
     } else {
-      setTimeLeft(workout.restTime)
+      setTimeLeft(workout.restTime * 100)
       setSetStatus({
         timerActive: true,
         isResting: true
@@ -151,9 +151,20 @@ export const WorkoutTracker = ({
         {setStatus.isResting && (
           <div className='text-center space-y-2'>
             {timeLeft > 0 && (
-              <div className='text-xl font-bold'>
-                Rest Time: {Math.ceil(timeLeft / 1000)}s
-              </div>
+              <>
+                <div className='text-xl font-bold'>
+                  Rest Time: {Math.ceil(timeLeft / 1000)}s
+                </div>
+                <Button
+                  variant='default'
+                  onClick={() => {
+                    handleNextSet()
+                    handleStartSet()
+                  }}
+                >
+                  Start next set
+                </Button>
+              </>
             )}
             {timeLeft === 0 && (
               <div className='flex justify-center space-x-4'>
