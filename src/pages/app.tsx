@@ -12,7 +12,6 @@ import { ProgressGrid } from '../components/ProgressGrid'
 import { WorkoutTracker } from '../components/WorkoutTracker'
 import { ResultsTable } from '../components/ResultsTable'
 import {
-  calculatePushupSets,
   requiredExam,
   completedExam,
   formatDate,
@@ -56,6 +55,7 @@ export default function App() {
   const exam = requiredExam(state.currentDay)
   const result = examResult(exam, state.examResults)!
   const workout = getWorkout(state.currentDay)
+  const currentSets = result ? workout.sets[result.level] : []
 
   const storeWorkout = (success: boolean, pushupsDone: number) => {
     setState((prev) => ({
