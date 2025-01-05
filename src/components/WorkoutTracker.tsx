@@ -1,8 +1,7 @@
-// components/WorkoutTracker.tsx
 import { Button } from '@/components/ui/button'
 import { Timer } from 'lucide-react'
 import { type ExamResult, type SetStatus } from '../types'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import type { DayWorkout } from '@/workoutPlan'
 
 interface WorkoutTrackerProps {
@@ -12,6 +11,115 @@ interface WorkoutTrackerProps {
   onFinishDay: () => void
 }
 
+type TWorking = {
+  state: 'working-out'
+  startTime: number
+}
+type TState = {
+  currentSet: number
+  sets: number[]
+} & (
+  | {
+      state: 'resting'
+      endTime: number
+    }
+  | { state: 'rest-over' }
+  | TWorking
+  | {
+      state: 'starting'
+    }
+)
+const INITIAL_STATE: TState = {
+  state: 'starting',
+  currentSet: 0,
+  sets: []
+}
+
+const InProgress = ({
+  startTime,
+  onSuccess,
+  onFail
+}: {
+  startTime: number
+  onSuccess: () => void
+  onFail: () => void
+}) => {
+  const [forceUpdate, setForceUpdate] = useState(0)
+  useEffect(() => {
+    let timer = window.setInterval(() => {
+      setForceUpdate((prev) => prev + 1)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className='text-center space-y-2'>
+      <div className='text-xl font-bold'>
+        <Timer className='inline-block mr-2' />
+        Set in Progress: {Math.floor((Date.now() - startTime) / 1000)}s
+      </div>
+      <div className='flex justify-center space-x-4'>
+        <Button variant='default' onClick={onSuccess}>
+          Finished
+        </Button>
+        <Button variant='destructive' onClick={onFail}>
+          Failed
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+const Resting = ({
+  endTime,
+  onRested,
+  onSkipRest
+}: {
+  endTime: number
+  onRested: () => void
+  onSkipRest: () => void
+}) => {
+  const [forceUpdate, setForceUpdate] = useState(0)
+  useEffect(() => {
+    let timer = window.setInterval(() => {
+      setForceUpdate((prev) => prev + 1)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const timeLeft = endTime - new Date().getTime()
+  // FIXME: Cannot update a component (`WorkoutTracker`) while rendering a different component (`Resting`)
+  if (timeLeft <= 0) setTimeout(() => onRested(), 0)
+
+  return (
+    <>
+      <div className='text-xl font-bold'>
+        Rest Time: {Math.ceil(timeLeft / 1000)}s
+      </div>
+      <Button variant='default' onClick={onSkipRest}>
+        Start next set
+      </Button>
+    </>
+  )
+}
+const RestOver = ({
+  onContinue,
+  onRestMore
+}: {
+  onContinue: () => void
+  onRestMore: () => void
+}) => {
+  return (
+    <div className='flex justify-center space-x-4'>
+      <Button variant='outline' onClick={onRestMore}>
+        Another minute
+      </Button>
+      <Button variant='default' onClick={onContinue}>
+        Start next set
+      </Button>
+    </div>
+  )
+}
 export const WorkoutTracker = ({
   workout,
   result,
@@ -19,94 +127,18 @@ export const WorkoutTracker = ({
   onFinishDay,
   onFailSet
 }: WorkoutTrackerProps) => {
-  const [setStatus, setSetStatus] = useState<SetStatus>({
-    timerActive: false,
-    isResting: false
+  const [workoutState, setWorkoutState] = useState<TState>({
+    ...INITIAL_STATE,
+    sets: workout.sets[result.level]!
   })
-  const [timeLeft, setTimeLeft] = useState(0)
-  const [activeSet, setActiveSet] = useState(0)
-  const sets = workout.sets[result.level] || [] // For FAILED state
-  const isLastSet = activeSet === sets.length - 1
+
   const isDev = window.location.hostname === 'localhost'
-  const handleAnotherMinute = () => {
-    setTimeLeft(60_000)
-  }
-
-  const handleStartSet = () => {
-    setSetStatus({
-      timerActive: true,
-      isResting: false,
-      startTime: Date.now()
-    })
-  }
-
-  const handleNextSet = () => {
-    console.log('next set')
-    setActiveSet((prev) => prev + 1)
-    setSetStatus({
-      timerActive: false,
-      isResting: false
-    })
-  }
-
-  const handleFailSet = () => {
-    setActiveSet(0)
-    setSetStatus({
-      timerActive: false,
-      isResting: false
-    })
-    onFailSet(activeSet)
-  }
-
-  const handleFinishSet = () => {
-    setSetStatus({
-      timerActive: false,
-      isResting: false
-    })
-
-    if (isLastSet) {
-      setActiveSet(0)
-
-      onFinishDay()
-    } else {
-      setTimeLeft(workout.restTime * 1000)
-      setSetStatus({
-        timerActive: true,
-        isResting: true
-      })
-    }
-  }
-
-  // Rest timer
-  useEffect(() => {
-    let timer: number
-    if (setStatus.isResting && timeLeft > 0) {
-      timer = window.setInterval(() => {
-        setTimeLeft((prev) => Math.max(0, prev - 100))
-      }, 100)
-    }
-    return () => clearInterval(timer)
-  }, [setStatus.isResting, timeLeft])
-
-  useEffect(() => {
-    let timer: number
-    if (setStatus.timerActive && !setStatus.isResting) {
-      timer = window.setInterval(() => {
-        // Force re-render to update elapsed time
-        setForceUpdate((prev) => prev + 1)
-      }, 1000)
-    }
-    return () => clearInterval(timer)
-  }, [setStatus.timerActive, setStatus.isResting])
-
-  // Add at the top with other state:
-  const [forceUpdate, setForceUpdate] = useState(0)
 
   return (
     <div className='space-y-6'>
       <div className='grid grid-cols-5 gap-4'>
-        {sets.map((reps, idx) => {
-          const isActive = activeSet === idx
+        {workoutState.sets.map((reps, idx) => {
+          const isActive = workoutState.currentSet === idx
           return (
             <div
               key={idx}
@@ -124,77 +156,109 @@ export const WorkoutTracker = ({
       </div>
 
       <div className='space-y-4'>
-        {setStatus.timerActive && !setStatus.isResting && (
-          <div className='text-center space-y-2'>
-            <div className='text-xl font-bold'>
-              <Timer className='inline-block mr-2' />
-              Set in Progress:{' '}
-              {Math.floor((Date.now() - (setStatus.startTime || 0)) / 1000)}s
-            </div>
-            <div className='flex justify-center space-x-4'>
-              <Button variant='default' onClick={handleFinishSet}>
-                Finished
+        <div className='text-center space-y-2'>
+          {workoutState.state == 'resting' && (
+            <Resting
+              endTime={workoutState.endTime}
+              onRested={() =>
+                setWorkoutState((prev) => ({
+                  ...prev,
+                  state: 'rest-over'
+                }))
+              }
+              onSkipRest={() =>
+                setWorkoutState((prev) => ({
+                  ...prev,
+                  state: 'working-out',
+                  startTime: new Date().getTime()
+                }))
+              }
+            ></Resting>
+          )}
+          {workoutState.state == 'rest-over' && (
+            <RestOver
+              onContinue={() =>
+                setWorkoutState((prev) => ({
+                  ...prev,
+                  state: 'working-out',
+                  startTime: new Date().getTime()
+                }))
+              }
+              onRestMore={() =>
+                setWorkoutState((prev) => {
+                  console.log('rest more')
+                  return {
+                    ...prev,
+                    state: 'resting',
+                    endTime: new Date().getTime() + 60_000
+                  }
+                })
+              }
+            ></RestOver>
+          )}
+          {workoutState.state == 'working-out' && (
+            <InProgress
+              startTime={workoutState.startTime}
+              onFail={() => {
+                onFailSet(workoutState.currentSet)
+                setWorkoutState({
+                  ...INITIAL_STATE,
+                  sets: workout.sets[result.level]!
+                })
+              }}
+              onSuccess={() => {
+                if (workoutState.currentSet == workoutState.sets.length - 1) {
+                  onFinishDay()
+                  setWorkoutState({
+                    ...INITIAL_STATE,
+                    sets: workout.sets[result.level]!
+                  })
+                } else {
+                  setWorkoutState((prev) => ({
+                    ...prev,
+                    state: 'resting',
+                    currentSet: prev.currentSet + 1,
+                    endTime: new Date().getTime() + workout.restTime * 1_000
+                  }))
+                }
+              }}
+            ></InProgress>
+          )}
+          {workoutState.state == 'starting' && (
+            <div className='text-center'>
+              <Button
+                onClick={() =>
+                  setWorkoutState((prev) => ({
+                    ...prev,
+                    state: 'working-out',
+                    startTime: new Date().getTime()
+                  }))
+                }
+              >
+                Start Set
               </Button>
-              <Button variant='destructive' onClick={handleFailSet}>
-                Failed
-              </Button>
             </div>
-          </div>
-        )}
-
-        {!setStatus.timerActive && !setStatus.isResting && (
-          <div className='text-center'>
-            <Button onClick={handleStartSet}>Start Set</Button>
-          </div>
-        )}
-
-        {setStatus.isResting && (
-          <div className='text-center space-y-2'>
-            {timeLeft > 0 && (
-              <>
-                <div className='text-xl font-bold'>
-                  Rest Time: {Math.ceil(timeLeft / 1000)}s
-                </div>
-                <Button
-                  variant='default'
-                  onClick={() => {
-                    handleNextSet()
-                    handleStartSet()
-                  }}
-                >
-                  Start next set
-                </Button>
-              </>
-            )}
-            {timeLeft === 0 && (
-              <div className='flex justify-center space-x-4'>
-                <Button variant='outline' onClick={handleAnotherMinute}>
-                  Another Minute
-                </Button>
-                <Button
-                  variant='default'
-                  onClick={() => {
-                    handleNextSet()
-                    handleStartSet()
-                  }}
-                >
-                  Start next set
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
 
         {isDev && (
-        <Button
-          variant='default'
-          onClick={() => {
-            handleNextSet()
-            handleStartSet()
-          }}
-        >
-          hack next Set
-        </Button>)}
+          <Button
+            variant='default'
+            onClick={() => {
+              setWorkoutState((prev) => {
+                return {
+                  ...prev,
+                  currentSet: Math.min(
+                    prev.sets.length - 1,
+                    prev.currentSet + 1
+                  )
+                }
+              })
+            }}
+          >
+            hack next Set
+          </Button>
+        )}
       </div>
     </div>
   )
