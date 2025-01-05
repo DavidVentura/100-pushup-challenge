@@ -6,7 +6,7 @@ export const calculatePushupSets = (
   currentDay: number,
   result: ExamResult
 ): number[] => {
-  return getWorkout(currentDay).sets[result!.level]
+  return getWorkout(currentDay).sets[result!.level]!
 }
 
 export const getWorkout = (day: number): DayWorkout => {

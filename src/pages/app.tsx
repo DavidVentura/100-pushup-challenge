@@ -64,11 +64,10 @@ export default function App() {
     }))
   }
 
-  // Calculate current pushup sets
   const exam = requiredExam(state.currentDay)
   const result = examResult(exam, state.examResults)!
   const workout = getWorkout(state.currentDay)
-  const currentSets = result ? workout.sets[result.level] : []
+  const currentSets = result ? workout.sets[result.level]! : []
 
   const storeWorkout = (success: boolean, pushupsDone: number) => {
     setState((prev) => ({
