@@ -20,7 +20,7 @@ export interface ExamConfig {
 
 export interface DayProgress {
   day: number
-  date: string
+  dateEpochMs: number
   success: boolean
   totalPushups: number
   overridden: boolean

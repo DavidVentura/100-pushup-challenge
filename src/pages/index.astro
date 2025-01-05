@@ -1,6 +1,7 @@
 ---
 import ExerciseApp from './app.jsx'
 import '@/styles/globals.css'
+import { pwaInfo } from 'virtual:pwa-info';
 ---
 
 <html lang='en'>
@@ -9,7 +10,9 @@ import '@/styles/globals.css'
     <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
     <meta name='viewport' content='width=device-width' />
     <meta name='generator' content={Astro.generator} />
-    <title>Astro</title>
+    <title>100 Pushup Challenge</title>
+    { pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} /> }
+    <script src="/src/pwa.ts"></script>
   </head>
   <body>
     <ExerciseApp client:only='react' />

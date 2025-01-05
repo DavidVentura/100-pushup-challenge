@@ -27,7 +27,7 @@ export const WorkoutTracker = ({
   const [activeSet, setActiveSet] = useState(0)
   const sets = workout.sets[result.level] || [] // For FAILED state
   const isLastSet = activeSet === sets.length - 1
-
+  const isDev = window.location.hostname === 'localhost'
   const handleAnotherMinute = () => {
     setTimeLeft(60_000)
   }
@@ -69,7 +69,7 @@ export const WorkoutTracker = ({
 
       onFinishDay()
     } else {
-      setTimeLeft(workout.restTime * 100)
+      setTimeLeft(workout.restTime * 1000)
       setSetStatus({
         timerActive: true,
         isResting: true
@@ -185,6 +185,7 @@ export const WorkoutTracker = ({
           </div>
         )}
 
+        {isDev && (
         <Button
           variant='default'
           onClick={() => {
@@ -193,7 +194,7 @@ export const WorkoutTracker = ({
           }}
         >
           hack next Set
-        </Button>
+        </Button>)}
       </div>
     </div>
   )
