@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, Dumbbell } from 'lucide-react'
 import {
   type DayProgress,
   type ExamResult,
@@ -6,6 +6,7 @@ import {
   EXAM_CONFIGS
 } from '../types'
 import { passedExam, examResult, pushupsForDay, requiredExam } from '../utils'
+import cn from 'classnames'
 
 interface ProgressGridProps {
   currentDay: number
@@ -126,5 +127,67 @@ export const ProgressGrid = ({
     return elements
   }
 
-  return <div className='space-y-4'>{renderDays()}</div>
+  const terms = [
+    {
+      exam: { label: 'first exam', result: 'high' },
+      weeks: [
+        [
+          { pushupCount: 50, status: 'done' },
+          { pushupCount: 10, status: 'failed' },
+          { pushupCount: 10 }
+        ],
+        [{ pushupCount: 22 }, { pushupCount: 33 }, { pushupCount: 10 }]
+      ]
+    },
+    {
+      exam: { label: 'first exam', result: null },
+      weeks: [[{ pushupCount: 50 }, { pushupCount: 10 }, { pushupCount: 10 }]]
+    }
+  ]
+  return (
+    <div className='space-y-4'>
+      <div className='gap-3 grid grid-cols-[36px_repeat(3,_minmax(0,_1fr))]'>
+        {terms.map((t) => (
+          <>
+            {t.weeks.map((week, idx) => (
+              <>
+                {idx === 0 ? (
+                  <div className={
+                    cn('rounded-full place-self-center p-2 border',
+                    {
+                      'bg-green-100 border-green-600 text-green-600': ![null, 'failed'].includes(t.exam.result),
+                      'bg-red-100 border-red-600 text-red-600': t.exam.result == 'failed',
+                      'bg-gray-100 border-gray-100 text-gray-600': t.exam.result == null,
+                      
+                    })}>
+                    <Dumbbell strokeWidth={1.5} className='w-4 h-4'></Dumbbell>
+                  </div>
+                ) : (
+                  <div></div>
+                )}
+                {week.map((day, didx) => (
+                  <div className={cn('p-2 rounded-md relative', {
+                    'bg-gray-100': !('status' in day),
+                    'bg-green-100': day.status === 'done',
+                    'bg-red-100': day.status === 'failed'
+                  })}>
+                    <h4 className='text-xs text-gray-700'>
+                      Day {didx + 1 + idx * 3}
+                    </h4>
+                    <span>{day.pushupCount}</span>
+                    {'status' in day &&
+                      (day.status === 'done' ? (
+                        <CheckCircle2 className='absolute bottom-1 right-2 w-4 text-green-500'></CheckCircle2>
+                      ) : (
+                        <XCircle className='absolute bottom-1 right-2 w-4 text-red-500'></XCircle>
+                      ))}
+                  </div>
+                ))}
+              </>
+            ))}
+          </>
+        ))}
+      </div>
+    </div>
+  )
 }

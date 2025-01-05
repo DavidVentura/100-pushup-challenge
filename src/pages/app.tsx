@@ -36,7 +36,7 @@ export default function App() {
   }
 
   const [state, setState] = useState<AppState>(getState())
-  const [activeTab, setActiveTab] = useState('workout')
+  const [activeTab, setActiveTab] = useState('progress')
 
   // Save state changes
   useEffect(() => {
