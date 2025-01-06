@@ -1,11 +1,6 @@
 import { CheckCircle2, XCircle, Dumbbell } from 'lucide-react'
-import {
-  type DayProgress,
-  type ExamResult,
-  type ExamPhase,
-  EXAM_CONFIGS
-} from '../types'
-import { passedExam, examResult, pushupsForDay, requiredExam } from '../utils'
+import { type DayProgress, type ExamResult, type ExamPhase } from '../types'
+import { examResult, pushupsForDay, requiredExam } from '../utils'
 import cn from 'classnames'
 
 interface ProgressGridProps {
