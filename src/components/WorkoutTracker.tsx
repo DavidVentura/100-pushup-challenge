@@ -3,6 +3,7 @@ import { Timer } from 'lucide-react'
 import { type ExamResult, type SetStatus } from '../types'
 import { useState, useEffect, createContext, useContext } from 'react'
 import type { DayWorkout } from '@/workoutPlan'
+import cn from 'classnames'
 
 interface WorkoutTrackerProps {
   workout: DayWorkout
@@ -11,6 +12,7 @@ interface WorkoutTrackerProps {
   onFinishDay: () => void
 }
 
+type TStates = 'resting' | 'working-out' | 'rest-over' | 'starting'
 type TWorking = {
   state: 'working-out'
   startTime: number
@@ -29,11 +31,6 @@ type TState = {
       state: 'starting'
     }
 )
-const INITIAL_STATE: TState = {
-  state: 'starting',
-  currentSet: 0,
-  sets: []
-}
 
 const InProgress = ({
   startTime,
@@ -120,6 +117,7 @@ const RestOver = ({
     </div>
   )
 }
+
 export const WorkoutTracker = ({
   workout,
   result,
@@ -127,13 +125,44 @@ export const WorkoutTracker = ({
   onFinishDay,
   onFailSet
 }: WorkoutTrackerProps) => {
-  const [workoutState, setWorkoutState] = useState<TState>({
-    ...INITIAL_STATE,
+  const INITIAL_STATE: TState = {
+    state: 'starting',
+    currentSet: -1,
     sets: workout.sets[result.level]!
-  })
+  }
+  const [workoutState, setWorkoutState] = useState<TState>(INITIAL_STATE)
 
   const isDev = window.location.hostname === 'localhost'
-
+  const isLastSet = workoutState.currentSet == workoutState.sets.length - 1
+  const toState = (state: TStates, restDuration?: number) => {
+    switch (state) {
+      case 'rest-over':
+        setWorkoutState((prev) => ({
+          ...prev,
+          state
+        }))
+        break
+      case 'resting':
+        setWorkoutState((prev) => ({
+          ...prev,
+          state: 'resting',
+          endTime:
+            new Date().getTime() + (restDuration || workout.restTime * 1_000)
+        }))
+        break
+      case 'starting':
+        setWorkoutState(INITIAL_STATE)
+        break
+      case 'working-out':
+        setWorkoutState((prev) => ({
+          ...prev,
+          currentSet: prev.currentSet + 1,
+          state,
+          startTime: new Date().getTime()
+        }))
+        break
+    }
+  }
   return (
     <div className='space-y-6'>
       <div className='grid grid-cols-5 gap-4'>
@@ -142,11 +171,10 @@ export const WorkoutTracker = ({
           return (
             <div
               key={idx}
-              className={`p-4 rounded text-center ${
-                isActive
-                  ? 'bg-blue-100 border-2 border-blue-500'
-                  : 'bg-gray-100'
-              }`}
+              className={cn('p-4 rounded outline-none text-center', {
+                'bg-blue-100 outline-2 outline-blue-500 outline-offset-[-1px]': isActive,
+                'bg-gray-100': !isActive
+              })}
             >
               <div className='text-sm text-gray-600'>Set {idx + 1}</div>
               <div className='font-medium'>{reps}</div>
@@ -160,40 +188,14 @@ export const WorkoutTracker = ({
           {workoutState.state == 'resting' && (
             <Resting
               endTime={workoutState.endTime}
-              onRested={() =>
-                setWorkoutState((prev) => ({
-                  ...prev,
-                  state: 'rest-over'
-                }))
-              }
-              onSkipRest={() =>
-                setWorkoutState((prev) => ({
-                  ...prev,
-                  state: 'working-out',
-                  startTime: new Date().getTime()
-                }))
-              }
+              onRested={() => toState('rest-over')}
+              onSkipRest={() => toState('working-out')}
             ></Resting>
           )}
           {workoutState.state == 'rest-over' && (
             <RestOver
-              onContinue={() =>
-                setWorkoutState((prev) => ({
-                  ...prev,
-                  state: 'working-out',
-                  startTime: new Date().getTime()
-                }))
-              }
-              onRestMore={() =>
-                setWorkoutState((prev) => {
-                  console.log('rest more')
-                  return {
-                    ...prev,
-                    state: 'resting',
-                    endTime: new Date().getTime() + 60_000
-                  }
-                })
-              }
+              onContinue={() => toState('working-out')}
+              onRestMore={() => toState('resting', 60_000)}
             ></RestOver>
           )}
           {workoutState.state == 'working-out' && (
@@ -201,42 +203,21 @@ export const WorkoutTracker = ({
               startTime={workoutState.startTime}
               onFail={() => {
                 onFailSet(workoutState.currentSet)
-                setWorkoutState({
-                  ...INITIAL_STATE,
-                  sets: workout.sets[result.level]!
-                })
+                toState('starting')
               }}
               onSuccess={() => {
-                if (workoutState.currentSet == workoutState.sets.length - 1) {
+                if (isLastSet) {
                   onFinishDay()
-                  setWorkoutState({
-                    ...INITIAL_STATE,
-                    sets: workout.sets[result.level]!
-                  })
+                  toState('starting')
                 } else {
-                  setWorkoutState((prev) => ({
-                    ...prev,
-                    state: 'resting',
-                    currentSet: prev.currentSet + 1,
-                    endTime: new Date().getTime() + workout.restTime * 1_000
-                  }))
+                  toState('resting')
                 }
               }}
             ></InProgress>
           )}
           {workoutState.state == 'starting' && (
             <div className='text-center'>
-              <Button
-                onClick={() =>
-                  setWorkoutState((prev) => ({
-                    ...prev,
-                    state: 'working-out',
-                    startTime: new Date().getTime()
-                  }))
-                }
-              >
-                Start Set
-              </Button>
+              <Button onClick={() => toState('working-out')}>Start Workout</Button>
             </div>
           )}
         </div>
