@@ -12,7 +12,6 @@ interface WorkoutTrackerProps {
   onFinishDay: () => void
 }
 
-type TStates = 'resting' | 'working-out' | 'rest-over' | 'starting'
 type TWorking = {
   state: 'working-out'
   startTime: number
@@ -131,10 +130,10 @@ export const WorkoutTracker = ({
     sets: workout.sets[result.level]!
   }
   const [workoutState, setWorkoutState] = useState<TState>(INITIAL_STATE)
-
   const isDev = window.location.hostname === 'localhost'
   const isLastSet = workoutState.currentSet == workoutState.sets.length - 1
-  const toState = (state: TStates, restDuration?: number) => {
+  
+  const toState = (state: TState["state"], restDuration?: number) => {
     switch (state) {
       case 'rest-over':
         setWorkoutState((prev) => ({
