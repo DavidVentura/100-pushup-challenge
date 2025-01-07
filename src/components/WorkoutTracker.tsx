@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Timer, Activity } from 'lucide-react'
 import { type ExamResult } from '../types'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import type { DayWorkout } from '@/workoutPlan'
 import cn from 'classnames'
 
@@ -169,7 +169,7 @@ export const WorkoutTracker = ({
         {workoutState.sets.map((reps, idx) => {
           const isActive = workoutState.currentSet === idx
           return (
-            <>
+            <Fragment key={`workout-${idx}`}>
               <div
                 key={idx}
                 className={cn('p-4 rounded outline-none text-center', {
@@ -199,7 +199,7 @@ export const WorkoutTracker = ({
                   )}
                 ></Activity>
               )}
-            </>
+            </Fragment>
           )
         })}
       </div>

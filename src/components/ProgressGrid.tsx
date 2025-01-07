@@ -2,6 +2,7 @@ import { CheckCircle2, XCircle, Dumbbell } from 'lucide-react'
 import { type DayProgress, type ExamResult, type ExamPhase } from '../types'
 import { examResult, pushupsForDay, requiredExam } from '../utils'
 import cn from 'classnames'
+import { Fragment } from 'react/jsx-runtime'
 
 interface ProgressGridProps {
   currentDay: number
@@ -63,7 +64,7 @@ export const ProgressGrid = ({
     <div className='space-y-4'>
       <div className='gap-3 grid grid-cols-[36px_repeat(3,_minmax(0,_1fr))]'>
         {terms2.map((t, tidx) => (
-          <>
+          <Fragment key={`term-parent-${tidx}`}>
             <div
               key={`term-${tidx}`}
               className={cn('rounded-full place-self-start p-2 border', {
@@ -109,7 +110,7 @@ export const ProgressGrid = ({
                   ))}
               </div>
             ))}
-          </>
+          </Fragment>
         ))}
       </div>
       <div
