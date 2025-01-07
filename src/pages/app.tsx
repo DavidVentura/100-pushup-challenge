@@ -17,30 +17,32 @@ const INITIAL_STATE: AppState = {
   dataVersion: 2,
   currentDay: 0,
   examResults: [],
-  progress: []
+  progress: [],
 }
 
 export default function App() {
-  const getState = () => {
+  const getStateFromLocalStorage = (): AppState | null => {
     const savedState = localStorage.getItem(STORAGE_KEY)
     try {
       const parsed = savedState ? JSON.parse(savedState) : INITIAL_STATE
       if (parsed.dataVersion != INITIAL_STATE.dataVersion) {
         // TODO migrations?
-        return INITIAL_STATE
+        return null
       }
       return parsed
     } catch {
-      return INITIAL_STATE
+      return null
     }
   }
 
-  const [state, setState] = useState<AppState>(getState())
+  const [appState, setAppState] = useState<'loading' | 'ready'>('loading')
+  const [state, setState] = useState<AppState>(INITIAL_STATE)
   const [activeTab, setActiveTab] = useState('workout')
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  }, [state])
+    setAppState('ready')
+    setState(getStateFromLocalStorage() || INITIAL_STATE)
+  }, [])
 
   const handleExamSubmit = (result: ExamResult) => {
     if (result.level == 'fail') {
@@ -60,6 +62,7 @@ export default function App() {
       ...prev,
       examResults: [...prev.examResults, result]
     }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }
 
   const exam = requiredExam(state.currentDay)
@@ -80,6 +83,7 @@ export default function App() {
         } as DayProgress
       ]
     }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }
 
   const handleDayComplete = () => {
@@ -98,6 +102,7 @@ export default function App() {
     return storeWorkout(false, completedPushups)
   }
 
+  if (appState == 'loading') return <></>;
   return (
     <div className='container mx-auto p-4 space-y-6 w-full max-w-xl '>
       {state.currentDay == 0 && !passedExam(exam, state.examResults) ? (

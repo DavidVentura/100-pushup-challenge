@@ -22,7 +22,7 @@ type TState = {
 } & (
   | {
       state: 'resting'
-      endTime: number
+      duration: number
     }
   | { state: 'rest-over' }
   | TWorking
@@ -67,25 +67,28 @@ const InProgress = ({
 }
 
 const Resting = ({
-  endTime,
+  duration,
   onRested,
   onSkipRest
 }: {
-  endTime: number
+  duration: number
   onRested: () => void
   onSkipRest: () => void
 }) => {
-  const [forceUpdate, setForceUpdate] = useState(0)
+  const [elapsed, setElapsed] = useState(0)
   useEffect(() => {
     let timer = window.setInterval(() => {
-      setForceUpdate((prev) => prev + 1)
+      setElapsed((prev) => prev + 1_000)
     }, 1000)
     return () => clearInterval(timer)
   }, [])
 
-  const timeLeft = endTime - new Date().getTime()
-  // FIXME: Cannot update a component (`WorkoutTracker`) while rendering a different component (`Resting`)
-  if (timeLeft <= 0) setTimeout(() => onRested(), 0)
+  const timeLeft = duration - elapsed
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      onRested()
+    }
+  }, [elapsed])
 
   return (
     <>
@@ -145,8 +148,7 @@ export const WorkoutTracker = ({
         setWorkoutState((prev) => ({
           ...prev,
           state: 'resting',
-          endTime:
-            new Date().getTime() + (restDuration || workout.restTime * 1_000)
+          duration: restDuration || workout.restTime * 1_000
         }))
         break
       case 'starting':
@@ -211,7 +213,7 @@ export const WorkoutTracker = ({
         <div className='text-center space-y-2'>
           {workoutState.state == 'resting' && (
             <Resting
-              endTime={workoutState.endTime}
+              duration={workoutState.duration}
               onRested={() => toState('rest-over')}
               onSkipRest={() => toState('working-out')}
             ></Resting>
