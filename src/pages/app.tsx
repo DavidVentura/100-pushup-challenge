@@ -36,14 +36,12 @@ export default function App() {
   }
 
   const [state, setState] = useState<AppState>(getState())
-  const [activeTab, setActiveTab] = useState('progress')
+  const [activeTab, setActiveTab] = useState('workout')
 
-  // Save state changes
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [state])
 
-  // Handle exam completion
   const handleExamSubmit = (result: ExamResult) => {
     if (result.level == 'fail') {
       setState((prev) => {
@@ -101,7 +99,7 @@ export default function App() {
   }
 
   return (
-    <div className='container mx-auto p-4 space-y-6 w-full max-w-3xl '>
+    <div className='container mx-auto p-4 space-y-6 w-full max-w-xl '>
       {state.currentDay == 0 && !passedExam(exam, state.examResults) ? (
         //  First exam takes over whole app
         <ExamForm examPhase={exam} onSubmit={handleExamSubmit} />
@@ -118,10 +116,12 @@ export default function App() {
           <TabsContent value='workout'>
             {!passedExam(exam, state.examResults) ? (
               <ExamForm examPhase={exam} onSubmit={handleExamSubmit} />
+            ) : state.currentDay == TOTAL_DAYS ? (
+              <h2 className='text-center'>You are done</h2>
             ) : (
               <>
                 <h2>
-                  Day {state.currentDay} / {TOTAL_DAYS}
+                  Day {state.currentDay + 1} / {TOTAL_DAYS}
                 </h2>
 
                 <WorkoutTracker

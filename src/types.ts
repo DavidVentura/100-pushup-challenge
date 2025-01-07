@@ -1,4 +1,4 @@
-export type ExamPhase = 'day0' | 'day6' | 'day12' | 'day15'
+export type ExamPhase = 'day0' | 'day6' | 'day12' | 'day15' | 'final'
 export type PushupLevel = 'low' | 'mid' | 'high' | 'fail'
 
 export interface ExamResult {
@@ -123,6 +123,20 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
       },
       {
         label: '61+',
+        level: 'high'
+      }
+    ]
+  },
+  final: {
+    title: 'Final test',
+    question:"Final gogogo",
+    options: [
+      {
+        label: '<100',
+        level: 'fail'
+      },
+      {
+        label: '100',
         level: 'high'
       }
     ]

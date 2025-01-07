@@ -62,9 +62,10 @@ export const ProgressGrid = ({
   return (
     <div className='space-y-4'>
       <div className='gap-3 grid grid-cols-[36px_repeat(3,_minmax(0,_1fr))]'>
-        {terms2.map((t) => (
+        {terms2.map((t, tidx) => (
           <>
             <div
+              key={`term-${tidx}`}
               className={cn('rounded-full place-self-start p-2 border', {
                 'bg-green-100 border-green-600 text-green-600':
                   t.exam && t.exam.level != 'fail',
@@ -83,13 +84,14 @@ export const ProgressGrid = ({
             </div>
             {t.days.map((day) => (
               <div
+                key={`term-${tidx}-day-${day.day}`}
                 className={cn('p-2 rounded-md outline-none relative', {
                   'bg-gray-100': day.status === undefined,
                   'bg-green-100': day.status === 'done',
                   'bg-red-100': day.status === 'failed',
-                  'outline-1 outline-red-600 outline-offset-[-1px] ':
+                  'outline-1 outline-red-600 outline-offset-[-1px]':
                     day.status !== undefined && day.day === currentDay,
-                  'outline-1 outline-indigo-600 outline-offset-[-1px] ':
+                  'outline-1 outline-blue-600 outline-offset-[-1px]':
                     day.status === undefined && day.day === currentDay
                 })}
               >
@@ -109,6 +111,18 @@ export const ProgressGrid = ({
             ))}
           </>
         ))}
+      </div>
+      <div
+        className={cn('rounded text-center p-4 outline-none', {
+          'bg-gray-100 text-gray-400': currentDay < totalDays,
+          'bg-gray-100 text-gray-400 outline-1 outline-blue-600 outline-offset-[-1px]':
+            currentDay == totalDays &&
+            examResult('final', examResults) === null,
+          'bg-green-100 text-black-400 outline-1 outline-green-600 outline-offset-[-1px]':
+            currentDay == totalDays && examResult('final', examResults)
+        })}
+      >
+        The big day
       </div>
     </div>
   )

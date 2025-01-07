@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
-import { Timer } from 'lucide-react'
-import { type ExamResult, type SetStatus } from '../types'
-import { useState, useEffect, createContext, useContext } from 'react'
+import { Timer, Activity } from 'lucide-react'
+import { type ExamResult } from '../types'
+import { useState, useEffect } from 'react'
 import type { DayWorkout } from '@/workoutPlan'
 import cn from 'classnames'
 
@@ -132,8 +132,8 @@ export const WorkoutTracker = ({
   const [workoutState, setWorkoutState] = useState<TState>(INITIAL_STATE)
   const isDev = window.location.hostname === 'localhost'
   const isLastSet = workoutState.currentSet == workoutState.sets.length - 1
-  
-  const toState = (state: TState["state"], restDuration?: number) => {
+
+  const toState = (state: TState['state'], restDuration?: number) => {
     switch (state) {
       case 'rest-over':
         setWorkoutState((prev) => ({
@@ -162,22 +162,44 @@ export const WorkoutTracker = ({
         break
     }
   }
+
   return (
     <div className='space-y-6'>
-      <div className='grid grid-cols-5 gap-4'>
+      <div className={cn('grid gap-1 grid-cols-6')}>
         {workoutState.sets.map((reps, idx) => {
           const isActive = workoutState.currentSet === idx
           return (
-            <div
-              key={idx}
-              className={cn('p-4 rounded outline-none text-center', {
-                'bg-blue-100 outline-2 outline-blue-500 outline-offset-[-1px]': isActive,
-                'bg-gray-100': !isActive
-              })}
-            >
-              <div className='text-sm text-gray-600'>Set {idx + 1}</div>
-              <div className='font-medium'>{reps}</div>
-            </div>
+            <>
+              <div
+                key={idx}
+                className={cn('p-4 rounded outline-none text-center', {
+                  'bg-blue-100 outline-2 outline-blue-500 outline-offset-[-1px]':
+                    isActive && workoutState.state === 'working-out',
+                  'bg-gray-100':
+                    !isActive || workoutState.state !== 'working-out'
+                  // 'outline-2 outline-green-500 outline-offset-[-1px]': workoutState.currentSet > idx
+                })}
+              >
+                <div className='text-sm text-gray-600'>Set {idx + 1}</div>
+                <div className='font-medium'>{reps}</div>
+              </div>
+              {idx < workoutState.sets.length - 1 && (
+                <Activity
+                  key={`rest-${idx}`}
+                  className={cn(
+                    'rounded-3xl h-12 w-12 p-4 place-self-center outline-none',
+                    {
+                      'bg-gray-100':
+                        workoutState.currentSet != idx ||
+                        !['resting', 'rest-over'].includes(workoutState.state),
+                      'bg-blue-100 outline-2 outline-blue-500 outline-offset-[-1px]':
+                        workoutState.currentSet == idx &&
+                        ['resting', 'rest-over'].includes(workoutState.state)
+                    }
+                  )}
+                ></Activity>
+              )}
+            </>
           )
         })}
       </div>
@@ -216,7 +238,9 @@ export const WorkoutTracker = ({
           )}
           {workoutState.state == 'starting' && (
             <div className='text-center'>
-              <Button onClick={() => toState('working-out')}>Start Workout</Button>
+              <Button onClick={() => toState('working-out')}>
+                Start Workout
+              </Button>
             </div>
           )}
         </div>
@@ -225,18 +249,11 @@ export const WorkoutTracker = ({
           <Button
             variant='default'
             onClick={() => {
-              setWorkoutState((prev) => {
-                return {
-                  ...prev,
-                  currentSet: Math.min(
-                    prev.sets.length - 1,
-                    prev.currentSet + 1
-                  )
-                }
-              })
+              onFinishDay()
+              toState('starting')
             }}
           >
-            hack next Set
+            Finish day
           </Button>
         )}
       </div>

@@ -187,6 +187,10 @@ const WEEK_6: WeekWorkout = {
     }
   ]
 }
+const EXAM: WeekWorkout = {
+  requiredExam: 'final',
+  days: [{ restTime: 0, sets: {} }]
+}
 
 export const workoutPlan: WeekWorkout[] = [
   WEEK_1,
@@ -194,5 +198,6 @@ export const workoutPlan: WeekWorkout[] = [
   WEEK_3,
   WEEK_4,
   WEEK_5,
-  WEEK_6
+  WEEK_6,
+  EXAM
 ]
