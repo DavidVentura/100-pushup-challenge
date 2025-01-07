@@ -181,9 +181,12 @@ export const WorkoutTracker = ({
                 })}
               >
                 <div className='text-sm text-gray-600'>Set {idx + 1}</div>
-                <div className='font-medium'>{reps}</div>
+                <div className='font-medium'>
+                  {idx == workoutState.sets.length - 1 ? `${reps}+` : reps}
+                </div>
               </div>
               {idx < workoutState.sets.length - 1 && (
+                // Rest icon
                 <Activity
                   key={`rest-${idx}`}
                   className={cn(
