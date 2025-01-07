@@ -8,10 +8,13 @@ export interface ExamResult {
   phase: ExamPhase
 }
 
-export interface ExamOption {
-  label: string
+export type ExamOption = {
   level: PushupLevel
-}
+} & (
+  | { min: number; max: null }
+  | { min: null; max: number }
+  | { min: number; max: number }
+)
 export interface ExamConfig {
   title: string
   question: string
@@ -41,22 +44,24 @@ export interface AppState {
 
 export const STORAGE_KEY = 'pushupChallenge'
 export const TOTAL_DAYS = 18
-
 export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
   day0: {
     title: 'Initial Pushup Test',
     question: 'How many pushups can you do in one set?',
     options: [
       {
-        label: '0-5',
+        min: null,
+        max: 5,
         level: 'low'
       },
       {
-        label: '6-14',
+        min: 6,
+        max: 14,
         level: 'mid'
       },
       {
-        label: '15-29',
+        min: 15,
+        max: 29,
         level: 'high'
       }
     ]
@@ -66,19 +71,23 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
     question: 'How many pushups can you do in one set now?',
     options: [
       {
-        label: '<16',
+        max: 15,
+        min: null,
         level: 'fail'
       },
       {
-        label: '16-20',
+        min: 16,
+        max: 20,
         level: 'low'
       },
       {
-        label: '21-25',
+        min: 21,
+        max: 25,
         level: 'mid'
       },
       {
-        label: '26+',
+        min: 26,
+        max: null,
         level: 'high'
       }
     ]
@@ -88,19 +97,23 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
     question: "Let's measure your progress. How many pushups can you do?",
     options: [
       {
-        label: '<31',
+        max: 30,
+        min: null,
         level: 'fail'
       },
       {
-        label: '31-35',
+        min: 31,
+        max: 35,
         level: 'low'
       },
       {
-        label: '36-40',
+        min: 36,
+        max: 40,
         level: 'mid'
       },
       {
-        label: '40+',
+        min: 41,
+        max: null,
         level: 'high'
       }
     ]
@@ -110,33 +123,39 @@ export const EXAM_CONFIGS: Record<ExamPhase, ExamConfig> = {
     question: "Let's measure your progress. How many pushups can you do?",
     options: [
       {
-        label: '<46',
+        max: 45,
+        min: null,
         level: 'fail'
       },
       {
-        label: '46-50',
+        min: 46,
+        max: 50,
         level: 'low'
       },
       {
-        label: '51-60',
+        min: 51,
+        max: 60,
         level: 'mid'
       },
       {
-        label: '61+',
+        min: 61,
+        max: null,
         level: 'high'
       }
     ]
   },
   final: {
     title: 'Final test',
-    question:"Final gogogo",
+    question: 'Final gogogo',
     options: [
       {
-        label: '<100',
+        max: 99,
+        min: null,
         level: 'fail'
       },
       {
-        label: '100',
+        min: 100,
+        max: null,
         level: 'high'
       }
     ]

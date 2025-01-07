@@ -5,7 +5,8 @@ import {
   type ExamPhase,
   type PushupLevel,
   type ExamResult,
-  EXAM_CONFIGS
+  EXAM_CONFIGS,
+  type ExamOption
 } from '../types'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
@@ -20,11 +21,18 @@ export const ExamForm = ({ examPhase, onSubmit }: ExamFormProps) => {
     React.useState<PushupLevel | null>(null)
   const config = EXAM_CONFIGS[examPhase]
 
+  const label = (examOpts: ExamOption): string => {
+    return examOpts.min == null
+      ? `<${examOpts.max}`
+      : examOpts.max == null
+        ? `>=${examOpts.min}`
+        : `${examOpts.min}-${examOpts.max}`
+  }
   const handleSubmit = () => {
     const level: PushupLevel = selectedOption!
-    const pushupRange = config.options.find(
-      (opt) => opt.level === level
-    )?.label!
+    const examOpts = config.options.find((opt) => opt.level === level)!
+    const pushupRange = label(examOpts)
+
     const result: ExamResult = {
       pushupRange,
       level,
@@ -51,12 +59,11 @@ export const ExamForm = ({ examPhase, onSubmit }: ExamFormProps) => {
             {config.options.map((option, index) => (
               <div key={option.level} className='flex items-center space-x-2'>
                 <RadioGroupItem
-                  data-label={option.label}
                   value={option.level.toString()}
                   id={`option-${index}`}
                 />
                 <Label htmlFor={`option-${index}`}>
-                  {option.label} pushups
+                  {label(option)} pushups
                 </Label>
               </div>
             ))}
